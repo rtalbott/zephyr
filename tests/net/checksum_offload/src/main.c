@@ -18,6 +18,7 @@ LOG_MODULE_REGISTER(net_test, NET_LOG_LEVEL);
 #include <errno.h>
 #include <sys/printk.h>
 #include <linker/sections.h>
+#include <random/rand32.h>
 
 #include <ztest.h>
 
@@ -85,9 +86,9 @@ static K_SEM_DEFINE(wait_data, 0, UINT_MAX);
 
 struct eth_context {
 	struct net_if *iface;
-	u8_t mac_addr[6];
+	uint8_t mac_addr[6];
 
-	u16_t expecting_tag;
+	uint16_t expecting_tag;
 };
 
 static struct eth_context eth_context_offloading_disabled;
@@ -96,7 +97,7 @@ static struct eth_context eth_context_offloading_enabled;
 static void eth_iface_init(struct net_if *iface)
 {
 	struct device *dev = net_if_get_device(iface);
-	struct eth_context *context = dev->driver_data;
+	struct eth_context *context = dev->data;
 
 	net_if_set_link_addr(iface, context->mac_addr,
 			     sizeof(context->mac_addr),
@@ -108,7 +109,7 @@ static void eth_iface_init(struct net_if *iface)
 	ethernet_init(iface);
 }
 
-static u16_t get_udp_chksum(struct net_pkt *pkt)
+static uint16_t get_udp_chksum(struct net_pkt *pkt)
 {
 	NET_PKT_DATA_ACCESS_DEFINE(udp_access, struct net_udp_hdr);
 	struct net_udp_hdr *udp_hdr;
@@ -137,7 +138,7 @@ static u16_t get_udp_chksum(struct net_pkt *pkt)
 
 static int eth_tx_offloading_disabled(struct device *dev, struct net_pkt *pkt)
 {
-	struct eth_context *context = dev->driver_data;
+	struct eth_context *context = dev->data;
 
 	zassert_equal_ptr(&eth_context_offloading_disabled, context,
 			  "Context pointers do not match (%p vs %p)",
@@ -150,8 +151,8 @@ static int eth_tx_offloading_disabled(struct device *dev, struct net_pkt *pkt)
 
 	if (start_receiving) {
 		struct net_udp_hdr hdr, *udp_hdr;
-		u16_t port;
-		u8_t lladdr[6];
+		uint16_t port;
+		uint8_t lladdr[6];
 
 		DBG("Packet %p received\n", pkt);
 
@@ -200,7 +201,7 @@ static int eth_tx_offloading_disabled(struct device *dev, struct net_pkt *pkt)
 	}
 
 	if (test_started) {
-		u16_t chksum;
+		uint16_t chksum;
 
 		chksum = get_udp_chksum(pkt);
 
@@ -216,7 +217,7 @@ static int eth_tx_offloading_disabled(struct device *dev, struct net_pkt *pkt)
 
 static int eth_tx_offloading_enabled(struct device *dev, struct net_pkt *pkt)
 {
-	struct eth_context *context = dev->driver_data;
+	struct eth_context *context = dev->data;
 
 	zassert_equal_ptr(&eth_context_offloading_enabled, context,
 			  "Context pointers do not match (%p vs %p)",
@@ -228,7 +229,7 @@ static int eth_tx_offloading_enabled(struct device *dev, struct net_pkt *pkt)
 	}
 
 	if (test_started) {
-		u16_t chksum;
+		uint16_t chksum;
 
 		chksum = get_udp_chksum(pkt);
 
@@ -267,7 +268,7 @@ static struct ethernet_api api_funcs_offloading_enabled = {
 	.send = eth_tx_offloading_enabled,
 };
 
-static void generate_mac(u8_t *mac_addr)
+static void generate_mac(uint8_t *mac_addr)
 {
 	/* 00-00-5E-00-53-xx Documentation RFC 7042 */
 	mac_addr[0] = 0x00;
@@ -280,7 +281,7 @@ static void generate_mac(u8_t *mac_addr)
 
 static int eth_init(struct device *dev)
 {
-	struct eth_context *context = dev->driver_data;
+	struct eth_context *context = dev->data;
 
 	generate_mac(context->mac_addr);
 
@@ -336,7 +337,7 @@ static void iface_cb(struct net_if *iface, void *user_data)
 
 	if (net_if_l2(iface) == &NET_L2_GET_NAME(ETHERNET)) {
 		struct eth_context *eth_ctx =
-			net_if_get_device(iface)->driver_data;
+			net_if_get_device(iface)->data;
 
 		if (eth_ctx == &eth_context_offloading_disabled) {
 			DBG("Iface %p without offloading\n", iface);
@@ -357,7 +358,7 @@ static void iface_cb(struct net_if *iface, void *user_data)
 	ud->total_if_count++;
 }
 
-static void eth_setup(void)
+static void test_eth_setup(void)
 {
 	struct user_data ud = { 0 };
 
@@ -370,7 +371,7 @@ static void eth_setup(void)
 		      sizeof(eth_interfaces) / sizeof(void *));
 }
 
-static void address_setup(void)
+static void test_address_setup(void)
 {
 	struct net_if_addr *ifaddr;
 	struct net_if *iface1, *iface2;
@@ -458,7 +459,7 @@ static bool add_neighbor(struct net_if *iface, struct in6_addr *addr)
 	return true;
 }
 
-static void tx_chksum_offload_disabled_test_v6(void)
+static void test_tx_chksum_offload_disabled_test_v6(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -484,7 +485,7 @@ static void tx_chksum_offload_disabled_test_v6(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[0];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_disabled, ctx,
 			  "eth context mismatch");
 
@@ -509,7 +510,7 @@ static void tx_chksum_offload_disabled_test_v6(void)
 	net_context_unref(udp_v6_ctx_1);
 }
 
-static void tx_chksum_offload_disabled_test_v4(void)
+static void test_tx_chksum_offload_disabled_test_v4(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -535,7 +536,7 @@ static void tx_chksum_offload_disabled_test_v4(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[0];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_disabled, ctx,
 			  "eth context mismatch");
 
@@ -560,7 +561,7 @@ static void tx_chksum_offload_disabled_test_v4(void)
 	net_context_unref(udp_v4_ctx_1);
 }
 
-static void tx_chksum_offload_enabled_test_v6(void)
+static void test_tx_chksum_offload_enabled_test_v6(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -586,7 +587,7 @@ static void tx_chksum_offload_enabled_test_v6(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[1];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_enabled, ctx,
 			  "eth context mismatch");
 
@@ -611,7 +612,7 @@ static void tx_chksum_offload_enabled_test_v6(void)
 	net_context_unref(udp_v6_ctx_2);
 }
 
-static void tx_chksum_offload_enabled_test_v4(void)
+static void test_tx_chksum_offload_enabled_test_v4(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -637,7 +638,7 @@ static void tx_chksum_offload_enabled_test_v4(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[1];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_enabled, ctx,
 			  "eth context mismatch");
 
@@ -705,7 +706,7 @@ static void recv_cb_offload_enabled(struct net_context *context,
 	net_pkt_unref(pkt);
 }
 
-static void rx_chksum_offload_disabled_test_v6(void)
+static void test_rx_chksum_offload_disabled_test_v6(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -731,7 +732,7 @@ static void rx_chksum_offload_disabled_test_v6(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[0];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_disabled, ctx,
 			  "eth context mismatch");
 
@@ -761,7 +762,7 @@ static void rx_chksum_offload_disabled_test_v6(void)
 	k_sleep(K_MSEC(10));
 }
 
-static void rx_chksum_offload_disabled_test_v4(void)
+static void test_rx_chksum_offload_disabled_test_v4(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -787,7 +788,7 @@ static void rx_chksum_offload_disabled_test_v4(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[0];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_disabled, ctx,
 			  "eth context mismatch");
 
@@ -817,7 +818,7 @@ static void rx_chksum_offload_disabled_test_v4(void)
 	k_sleep(K_MSEC(10));
 }
 
-static void rx_chksum_offload_enabled_test_v6(void)
+static void test_rx_chksum_offload_enabled_test_v6(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -843,7 +844,7 @@ static void rx_chksum_offload_enabled_test_v6(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[1];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_enabled, ctx,
 			  "eth context mismatch");
 
@@ -871,7 +872,7 @@ static void rx_chksum_offload_enabled_test_v6(void)
 	k_sleep(K_MSEC(10));
 }
 
-static void rx_chksum_offload_enabled_test_v4(void)
+static void test_rx_chksum_offload_enabled_test_v4(void)
 {
 	struct eth_context *ctx; /* This is interface context */
 	struct net_if *iface;
@@ -897,7 +898,7 @@ static void rx_chksum_offload_enabled_test_v4(void)
 	zassert_equal(ret, 0, "Context bind failure test failed");
 
 	iface = eth_interfaces[1];
-	ctx = net_if_get_device(iface)->driver_data;
+	ctx = net_if_get_device(iface)->data;
 	zassert_equal_ptr(&eth_context_offloading_enabled, ctx,
 			  "eth context mismatch");
 
@@ -928,16 +929,16 @@ static void rx_chksum_offload_enabled_test_v4(void)
 void test_main(void)
 {
 	ztest_test_suite(net_chksum_offload_test,
-			 ztest_unit_test(eth_setup),
-			 ztest_unit_test(address_setup),
-			 ztest_unit_test(tx_chksum_offload_disabled_test_v6),
-			 ztest_unit_test(tx_chksum_offload_disabled_test_v4),
-			 ztest_unit_test(tx_chksum_offload_enabled_test_v6),
-			 ztest_unit_test(tx_chksum_offload_enabled_test_v4),
-			 ztest_unit_test(rx_chksum_offload_disabled_test_v6),
-			 ztest_unit_test(rx_chksum_offload_disabled_test_v4),
-			 ztest_unit_test(rx_chksum_offload_enabled_test_v6),
-			 ztest_unit_test(rx_chksum_offload_enabled_test_v4)
+			 ztest_unit_test(test_eth_setup),
+			 ztest_unit_test(test_address_setup),
+			 ztest_unit_test(test_tx_chksum_offload_disabled_test_v6),
+			 ztest_unit_test(test_tx_chksum_offload_disabled_test_v4),
+			 ztest_unit_test(test_tx_chksum_offload_enabled_test_v6),
+			 ztest_unit_test(test_tx_chksum_offload_enabled_test_v4),
+			 ztest_unit_test(test_rx_chksum_offload_disabled_test_v6),
+			 ztest_unit_test(test_rx_chksum_offload_disabled_test_v4),
+			 ztest_unit_test(test_rx_chksum_offload_enabled_test_v6),
+			 ztest_unit_test(test_rx_chksum_offload_enabled_test_v4)
 			 );
 
 	ztest_run_test_suite(net_chksum_offload_test);

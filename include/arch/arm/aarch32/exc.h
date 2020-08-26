@@ -82,14 +82,16 @@ struct __esf {
 		sys_define_gpr_with_alias(ip, r12);
 		sys_define_gpr_with_alias(lr, r14);
 		sys_define_gpr_with_alias(pc, r15);
-		u32_t xpsr;
+		uint32_t xpsr;
 	} basic;
-#if defined(CONFIG_FPU) && defined(CONFIG_FP_SHARING)
+#if defined(CONFIG_FPU) && defined(CONFIG_FPU_SHARING)
 	float s[16];
-	u32_t fpscr;
-	u32_t undefined;
+	uint32_t fpscr;
+	uint32_t undefined;
 #endif
 };
+
+extern uint32_t z_arm_coredump_fault_sp;
 
 typedef struct __esf z_arch_esf_t;
 

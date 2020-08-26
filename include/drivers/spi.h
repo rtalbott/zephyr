@@ -22,6 +22,7 @@
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <device.h>
+#include <drivers/gpio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,11 +130,16 @@ extern "C" {
  *    to act as a CS line
  * @param delay is a delay in microseconds to wait before starting the
  *    transmission and before releasing the CS line
+ * @param gpio_dt_flags is the devicetree flags corresponding to how the CS
+ *    line should be driven. GPIO_ACTIVE_LOW/GPIO_ACTIVE_HIGH should be
+ *    equivalent to SPI_CS_ACTIVE_HIGH/SPI_CS_ACTIVE_LOW options in struct
+ *    spi_config.
  */
 struct spi_cs_control {
 	struct device	*gpio_dev;
-	u32_t		gpio_pin;
-	u32_t		delay;
+	uint32_t		delay;
+	gpio_pin_t		gpio_pin;
+	gpio_dt_flags_t		gpio_dt_flags;
 };
 
 /**
@@ -156,11 +162,16 @@ struct spi_cs_control {
  *
  * @note Only cs_hold and lock_on can be changed between consecutive
  * transceive call. Rest of the attributes are not meant to be tweaked.
+ *
+ * @warning Most drivers use pointer comparison to determine whether a
+ * passed configuration is different from one used in a previous
+ * transaction.  Changes to fields in the structure may not be
+ * detected.
  */
 struct spi_config {
-	u32_t		frequency;
-	u16_t		operation;
-	u16_t		slave;
+	uint32_t		frequency;
+	uint16_t		operation;
+	uint16_t		slave;
 
 	const struct spi_cs_control *cs;
 };
@@ -238,6 +249,8 @@ __subsystem struct spi_driver_api {
  *
  * @param dev Pointer to the device structure for the driver instance
  * @param config Pointer to a valid spi_config structure instance.
+ *        Pointer-comparison may be used to detect changes from
+ *        previous operations.
  * @param tx_bufs Buffer array where data to be sent originates from,
  *        or NULL if none.
  * @param rx_bufs Buffer array where data to be read will be written to,
@@ -258,7 +271,7 @@ static inline int z_impl_spi_transceive(struct device *dev,
 				       const struct spi_buf_set *rx_bufs)
 {
 	const struct spi_driver_api *api =
-		(const struct spi_driver_api *)dev->driver_api;
+		(const struct spi_driver_api *)dev->api;
 
 	return api->transceive(dev, config, tx_bufs, rx_bufs);
 }
@@ -270,6 +283,8 @@ static inline int z_impl_spi_transceive(struct device *dev,
  *
  * @param dev Pointer to the device structure for the driver instance
  * @param config Pointer to a valid spi_config structure instance.
+ *        Pointer-comparison may be used to detect changes from
+ *        previous operations.
  * @param rx_bufs Buffer array where data to be read will be written to.
  *
  * @retval 0 If successful, negative errno code otherwise.
@@ -290,6 +305,8 @@ static inline int spi_read(struct device *dev,
  *
  * @param dev Pointer to the device structure for the driver instance
  * @param config Pointer to a valid spi_config structure instance.
+ *        Pointer-comparison may be used to detect changes from
+ *        previous operations.
  * @param tx_bufs Buffer array where data to be sent originates from.
  *
  * @retval 0 If successful, negative errno code otherwise.
@@ -303,7 +320,6 @@ static inline int spi_write(struct device *dev,
 	return spi_transceive(dev, config, tx_bufs, NULL);
 }
 
-#ifdef CONFIG_SPI_ASYNC
 /**
  * @brief Read/write the specified amount of data from the SPI driver.
  *
@@ -311,6 +327,8 @@ static inline int spi_write(struct device *dev,
  *
  * @param dev Pointer to the device structure for the driver instance
  * @param config Pointer to a valid spi_config structure instance.
+ *        Pointer-comparison may be used to detect changes from
+ *        previous operations.
  * @param tx_bufs Buffer array where data to be sent originates from,
  *        or NULL if none.
  * @param rx_bufs Buffer array where data to be read will be written to,
@@ -330,10 +348,20 @@ static inline int spi_transceive_async(struct device *dev,
 				       const struct spi_buf_set *rx_bufs,
 				       struct k_poll_signal *async)
 {
+#ifdef CONFIG_SPI_ASYNC
 	const struct spi_driver_api *api =
-		(const struct spi_driver_api *)dev->driver_api;
+		(const struct spi_driver_api *)dev->api;
 
 	return api->transceive_async(dev, config, tx_bufs, rx_bufs, async);
+#else
+	ARG_UNUSED(dev);
+	ARG_UNUSED(config);
+	ARG_UNUSED(tx_bufs);
+	ARG_UNUSED(rx_bufs);
+	ARG_UNUSED(async);
+
+	return -ENOTSUP;
+#endif /* CONFIG_SPI_ASYNC */
 }
 
 /**
@@ -343,6 +371,8 @@ static inline int spi_transceive_async(struct device *dev,
  *
  * @param dev Pointer to the device structure for the driver instance
  * @param config Pointer to a valid spi_config structure instance.
+ *        Pointer-comparison may be used to detect changes from
+ *        previous operations.
  * @param rx_bufs Buffer array where data to be read will be written to.
  * @param async A pointer to a valid and ready to be signaled
  *        struct k_poll_signal. (Note: if NULL this function will not
@@ -368,6 +398,8 @@ static inline int spi_read_async(struct device *dev,
  *
  * @param dev Pointer to the device structure for the driver instance
  * @param config Pointer to a valid spi_config structure instance.
+ *        Pointer-comparison may be used to detect changes from
+ *        previous operations.
  * @param tx_bufs Buffer array where data to be sent originates from.
  * @param async A pointer to a valid and ready to be signaled
  *        struct k_poll_signal. (Note: if NULL this function will not
@@ -385,7 +417,6 @@ static inline int spi_write_async(struct device *dev,
 {
 	return spi_transceive_async(dev, config, tx_bufs, NULL, async);
 }
-#endif /* CONFIG_SPI_ASYNC */
 
 /**
  * @brief Release the SPI device locked on by the current config
@@ -399,6 +430,8 @@ static inline int spi_write_async(struct device *dev,
  *
  * @param dev Pointer to the device structure for the driver instance
  * @param config Pointer to a valid spi_config structure instance.
+ *        Pointer-comparison may be used to detect changes from
+ *        previous operations.
  */
 __syscall int spi_release(struct device *dev,
 			  const struct spi_config *config);
@@ -407,7 +440,7 @@ static inline int z_impl_spi_release(struct device *dev,
 				    const struct spi_config *config)
 {
 	const struct spi_driver_api *api =
-		(const struct spi_driver_api *)dev->driver_api;
+		(const struct spi_driver_api *)dev->api;
 
 	return api->release(dev, config);
 }

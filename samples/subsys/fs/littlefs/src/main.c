@@ -21,7 +21,7 @@ FS_LITTLEFS_DECLARE_DEFAULT_CONFIG(storage);
 static struct fs_mount_t lfs_storage_mnt = {
 	.type = FS_LITTLEFS,
 	.fs_data = &storage,
-	.storage_dev = (void *)DT_FLASH_AREA_STORAGE_ID,
+	.storage_dev = (void *)FLASH_AREA_ID(storage),
 	.mnt_point = "/lfs",
 };
 
@@ -87,13 +87,13 @@ void main(void)
 
 	struct fs_file_t file;
 
-	rc = fs_open(&file, fname);
+	rc = fs_open(&file, fname, FS_O_CREATE | FS_O_RDWR);
 	if (rc < 0) {
 		printk("FAIL: open %s: %d\n", fname, rc);
 		goto out;
 	}
 
-	u32_t boot_count = 0;
+	uint32_t boot_count = 0;
 
 	if (rc >= 0) {
 		rc = fs_read(&file, &boot_count, sizeof(boot_count));

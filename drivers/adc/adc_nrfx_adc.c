@@ -18,7 +18,7 @@ struct driver_data {
 	struct adc_context ctx;
 
 	nrf_adc_value_t *buffer;
-	u8_t active_channels;
+	uint8_t active_channels;
 };
 
 static struct driver_data m_data = {
@@ -34,7 +34,7 @@ static nrfx_adc_channel_t m_channels[CONFIG_ADC_NRFX_ADC_CHANNEL_COUNT];
 static int adc_nrfx_channel_setup(struct device *dev,
 				  const struct adc_channel_cfg *channel_cfg)
 {
-	u8_t channel_id = channel_cfg->channel_id;
+	uint8_t channel_id = channel_cfg->channel_id;
 	nrf_adc_config_t *config = &m_channels[channel_id].config;
 
 	if (channel_id >= CONFIG_ADC_NRFX_ADC_CHANNEL_COUNT) {
@@ -118,7 +118,7 @@ static void adc_context_update_buffer_pointer(struct adc_context *ctx,
 }
 
 static int check_buffer_size(const struct adc_sequence *sequence,
-			     u8_t active_channels)
+			     uint8_t active_channels)
 {
 	size_t needed_buffer_size;
 
@@ -139,9 +139,9 @@ static int check_buffer_size(const struct adc_sequence *sequence,
 static int start_read(struct device *dev, const struct adc_sequence *sequence)
 {
 	int error;
-	u32_t selected_channels = sequence->channels;
-	u8_t active_channels;
-	u8_t channel_id;
+	uint32_t selected_channels = sequence->channels;
+	uint8_t active_channels;
+	uint8_t channel_id;
 	nrf_adc_config_resolution_t nrf_resolution;
 
 	/* Signal an error if channel selection is invalid (no channels or
@@ -257,7 +257,7 @@ static int init_adc(struct device *dev)
 
 	if (result != NRFX_SUCCESS) {
 		LOG_ERR("Failed to initialize device: %s",
-			    dev->config->name);
+			    dev->name);
 		return -EBUSY;
 	}
 
@@ -294,6 +294,6 @@ static const struct adc_driver_api adc_nrfx_driver_api = {
 			    init_adc, NULL, NULL,			\
 			    POST_KERNEL,				\
 			    CONFIG_KERNEL_INIT_PRIORITY_DEVICE,		\
-			    &adc_nrfx_driver_api)
+			    &adc_nrfx_driver_api);
 
-DT_INST_FOREACH(ADC_INIT)
+DT_INST_FOREACH_STATUS_OKAY(ADC_INIT)

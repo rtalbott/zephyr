@@ -33,14 +33,14 @@ struct modem_shell_user_data {
 #define ms_send(ctx_, buf_, size_) \
 			(ctx_->iface.write(&ctx_->iface, buf_, size_))
 #define ms_context_from_id	modem_context_from_id
-#define UART_DEV_NAME(ctx)	(ctx->iface.dev->config->name)
+#define UART_DEV_NAME(ctx)	(ctx->iface.dev->name)
 #elif defined(CONFIG_MODEM_RECEIVER)
 #include "modem_receiver.h"
 #define ms_context		mdm_receiver_context
 #define ms_max_context		CONFIG_MODEM_RECEIVER_MAX_CONTEXTS
 #define ms_send			mdm_receiver_send
 #define ms_context_from_id	mdm_receiver_context_from_id
-#define UART_DEV_NAME(ctx_)	(ctx_->uart_dev->config->name)
+#define UART_DEV_NAME(ctx_)	(ctx_->uart_dev->name)
 #else
 #error "MODEM_CONTEXT or MODEM_RECEIVER need to be enabled"
 #endif
@@ -63,12 +63,20 @@ static int cmd_modem_list(const struct shell *shell, size_t argc,
 				"\tModel:        %s\n"
 				"\tRevision:     %s\n"
 				"\tIMEI:         %s\n"
+#if defined(CONFIG_MODEM_SIM_NUMBERS)
+				"\tIMSI:         %s\n"
+				"\tICCID:        %s\n"
+#endif
 				"\tRSSI:         %d\n", i,
 			       UART_DEV_NAME(mdm_ctx),
 			       mdm_ctx->data_manufacturer,
 			       mdm_ctx->data_model,
 			       mdm_ctx->data_revision,
 			       mdm_ctx->data_imei,
+#if defined(CONFIG_MODEM_SIM_NUMBERS)
+			       mdm_ctx->data_imsi,
+			       mdm_ctx->data_iccid,
+#endif
 			       mdm_ctx->data_rssi);
 		}
 	}
@@ -159,7 +167,7 @@ static void uart_mux_cb(struct device *uart, struct device *dev,
 
 	shell_fprintf(shell, SHELL_NORMAL,
 		      "%s\t\t%s\t\t%d (%s)\n",
-		      uart->config->name, dev->config->name, dlci_address, ch);
+		      uart->name, dev->name, dlci_address, ch);
 }
 #endif
 

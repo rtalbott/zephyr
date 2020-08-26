@@ -9,10 +9,10 @@
 # one of those lines:
 #
 # find_package(Zephyr)
-# find_package(Zephyr HINTS $ENV{ZEPHYR_BASE})
+# find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 #
-# The `HINTS $ENV{ZEPHYR_BASE}` variant is required for any application inside
-# the Zephyr repository.
+# The `REQUIRED HINTS $ENV{ZEPHYR_BASE}` variant is required for any application
+# inside the Zephyr repository.
 #
 # It exists to reduce boilerplate code that Zephyr expects to be in
 # application CMakeLists.txt code.
@@ -89,6 +89,8 @@ if((NOT DEFINED ZEPHYR_BASE) AND (DEFINED ENV_ZEPHYR_BASE))
   set(ZEPHYR_BASE ${ENV_ZEPHYR_BASE} CACHE PATH "Zephyr base")
 endif()
 
+find_package(ZephyrBuildConfiguration NAMES ZephyrBuild PATHS ${ZEPHYR_BASE}/../* QUIET NO_DEFAULT_PATH NO_POLICY_SCOPE)
+
 # Note any later project() resets PROJECT_SOURCE_DIR
 file(TO_CMAKE_PATH "${ZEPHYR_BASE}" PROJECT_SOURCE_DIR)
 
@@ -113,8 +115,18 @@ include(${ZEPHYR_BASE}/cmake/version.cmake)  # depends on hex.cmake
 #
 
 include(${ZEPHYR_BASE}/cmake/python.cmake)
+include(${ZEPHYR_BASE}/cmake/west.cmake)
 include(${ZEPHYR_BASE}/cmake/git.cmake)  # depends on version.cmake
 include(${ZEPHYR_BASE}/cmake/ccache.cmake)
+
+#
+# Find Zephyr modules.
+# Those may contain additional DTS, BOARD, SOC, ARCH ROOTs.
+# Also create the Kconfig binary dir for generated Kconf files.
+#
+set(KCONFIG_BINARY_DIR ${CMAKE_BINARY_DIR}/Kconfig)
+file(MAKE_DIRECTORY ${KCONFIG_BINARY_DIR})
+include(${ZEPHYR_BASE}/cmake/zephyr_module.cmake)
 
 if(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_BINARY_DIR})
   message(FATAL_ERROR "Source directory equals build directory.\
@@ -274,17 +286,20 @@ set(CACHED_SHIELD ${SHIELD} CACHE STRING "Selected shield")
 # be found. It always includes ${ZEPHYR_BASE} at the lowest priority.
 list(APPEND BOARD_ROOT ${ZEPHYR_BASE})
 
-if(NOT SOC_ROOT)
-  set(SOC_DIR ${ZEPHYR_BASE}/soc)
-else()
-  set(SOC_DIR ${SOC_ROOT}/soc)
-endif()
+# 'SOC_ROOT' is a prioritized list of directories where socs may be
+# found. It always includes ${ZEPHYR_BASE}/soc at the lowest priority.
+list(APPEND SOC_ROOT ${ZEPHYR_BASE})
 
-if(NOT ARCH_ROOT)
-  set(ARCH_DIR ${ZEPHYR_BASE}/arch)
-else()
-  set(ARCH_DIR ${ARCH_ROOT}/arch)
+# 'ARCH_ROOT' is a prioritized list of directories where archs may be
+# found. It always includes ${ZEPHYR_BASE} at the lowest priority.
+list(APPEND ARCH_ROOT ${ZEPHYR_BASE})
+
+if(DEFINED SHIELD)
+  string(REPLACE " " ";" SHIELD_AS_LIST "${SHIELD}")
 endif()
+# SHIELD-NOTFOUND is a real CMake list, from which valid shields can be popped.
+# After processing all shields, only invalid shields will be left in this list.
+set(SHIELD-NOTFOUND ${SHIELD_AS_LIST})
 
 # Use BOARD to search for a '_defconfig' file.
 # e.g. zephyr/boards/arm/96b_carbon_nrf51/96b_carbon_nrf51_defconfig.
@@ -312,9 +327,6 @@ foreach(root ${BOARD_ROOT})
   endif()
 
   set(shield_dir ${root}/boards/shields)
-  if(DEFINED SHIELD)
-     string(REPLACE " " ";" SHIELD_AS_LIST "${SHIELD}")
-  endif()
   # Match the .overlay files in the shield directories to make sure we are
   # finding shields, e.g. x_nucleo_iks01a1/x_nucleo_iks01a1.overlay
   file(GLOB_RECURSE shields_refs_list
@@ -326,6 +338,7 @@ foreach(root ${BOARD_ROOT})
   # x_nucleo_iks01a1/x_nucleo_iks01a1.overlay;x_nucleo_iks01a2/x_nucleo_iks01a2.overlay
   # we construct a list of shield names by extracting file name and
   # removing the extension.
+  unset(SHIELD_LIST)
   foreach(shield_path ${shields_refs_list})
     get_filename_component(shield ${shield_path} NAME_WE)
     list(APPEND SHIELD_LIST ${shield})
@@ -338,7 +351,7 @@ foreach(root ${BOARD_ROOT})
         continue()
       endif()
 
-      list(REMOVE_ITEM SHIELD ${s})
+      list(REMOVE_ITEM SHIELD-NOTFOUND ${s})
 
       list(GET shields_refs_list ${_idx} s_path)
       get_filename_component(s_dir ${s_path} DIRECTORY)
@@ -409,8 +422,8 @@ if(NOT BOARD_DIR)
   message(FATAL_ERROR "Invalid usage")
 endif()
 
-if(DEFINED SHIELD AND NOT (SHIELD STREQUAL ""))
-  foreach (s ${SHIELD})
+if(DEFINED SHIELD AND NOT (SHIELD-NOTFOUND STREQUAL ""))
+  foreach (s ${SHIELD-NOTFOUND})
     message("No shield named '${s}' found")
   endforeach()
   print_usage()
@@ -421,6 +434,19 @@ endif()
 get_filename_component(BOARD_ARCH_DIR ${BOARD_DIR}      DIRECTORY)
 get_filename_component(BOARD_FAMILY   ${BOARD_DIR}      NAME)
 get_filename_component(ARCH           ${BOARD_ARCH_DIR} NAME)
+
+foreach(root ${ARCH_ROOT})
+  if(EXISTS ${root}/arch/${ARCH}/CMakeLists.txt)
+    set(ARCH_DIR ${root}/arch)
+    break()
+  endif()
+endforeach()
+
+if(NOT ARCH_DIR)
+  message(FATAL_ERROR "Could not find ARCH=${ARCH} for BOARD=${BOARD}, \
+please check your installation. ARCH roots searched: \n\
+${ARCH_ROOT}")
+endif()
 
 if(CONF_FILE)
   # CONF_FILE has either been specified on the cmake CLI or is already
@@ -498,7 +524,6 @@ include(${BOARD_DIR}/pre_dt_board.cmake OPTIONAL)
 # preprocess DT sources, and then, after we have finished processing
 # both DT and Kconfig we complete the target-specific configuration,
 # and possibly change the toolchain.
-include(${ZEPHYR_BASE}/cmake/zephyr_module.cmake)
 include(${ZEPHYR_BASE}/cmake/generic_toolchain.cmake)
 include(${ZEPHYR_BASE}/cmake/dts.cmake)
 include(${ZEPHYR_BASE}/cmake/kconfig.cmake)
@@ -511,6 +536,21 @@ if("${SOC_SERIES}" STREQUAL "")
   set(SOC_PATH ${SOC_NAME})
 else()
   set(SOC_PATH ${SOC_FAMILY}/${SOC_SERIES})
+endif()
+
+# Use SOC to search for a 'CMakeLists.txt' file.
+# e.g. zephyr/soc/xtense/intel_apl_adsp/CMakeLists.txt.
+foreach(root ${SOC_ROOT})
+  if(EXISTS ${root}/soc/${ARCH}/${SOC_PATH})
+    set(SOC_DIR ${root}/soc)
+    break()
+  endif()
+endforeach()
+
+if(NOT SOC_DIR)
+  message(FATAL_ERROR "Could not find SOC=${SOC_NAME} for BOARD=${BOARD}, \
+please check your installation. SOC roots searched: \n\
+${SOC_ROOT}")
 endif()
 
 include(${ZEPHYR_BASE}/cmake/target_toolchain.cmake)
@@ -550,17 +590,22 @@ include(${BOARD_DIR}/board.cmake OPTIONAL)
 # The Qemu supported ethernet driver should define CONFIG_ETH_NIC_MODEL
 # string that tells what nic model Qemu should use.
 if(CONFIG_QEMU_TARGET)
-  if(CONFIG_NET_QEMU_ETHERNET)
-    if(CONFIG_ETH_NIC_MODEL)
-      list(APPEND QEMU_FLAGS_${ARCH}
-        -nic tap,model=${CONFIG_ETH_NIC_MODEL},script=no,downscript=no,ifname=${CONFIG_ETH_QEMU_IFACE_NAME}
-      )
-    else()
-      message(FATAL_ERROR "
-        No Qemu ethernet driver configured!
-        Enable Qemu supported ethernet driver like e1000 at drivers/ethernet"
-      )
+  if ((CONFIG_NET_QEMU_ETHERNET OR CONFIG_NET_QEMU_USER) AND NOT CONFIG_ETH_NIC_MODEL)
+    message(FATAL_ERROR "
+      No Qemu ethernet driver configured!
+      Enable Qemu supported ethernet driver like e1000 at drivers/ethernet"
+    )
+  elseif(CONFIG_NET_QEMU_ETHERNET)
+    if(CONFIG_ETH_QEMU_EXTRA_ARGS)
+      set(NET_QEMU_ETH_EXTRA_ARGS ",${CONFIG_ETH_QEMU_EXTRA_ARGS}")
     endif()
+    list(APPEND QEMU_FLAGS_${ARCH}
+      -nic tap,model=${CONFIG_ETH_NIC_MODEL},script=no,downscript=no,ifname=${CONFIG_ETH_QEMU_IFACE_NAME}${NET_QEMU_ETH_EXTRA_ARGS}
+    )
+  elseif(CONFIG_NET_QEMU_USER)
+    list(APPEND QEMU_FLAGS_${ARCH}
+      -nic user,model=${CONFIG_ETH_NIC_MODEL},${CONFIG_NET_QEMU_USER_EXTRA_ARGS}
+    )
   else()
     list(APPEND QEMU_FLAGS_${ARCH}
       -net none

@@ -29,7 +29,7 @@ struct gpio_ht16k33_cfg {
 	/* gpio_driver_config needs to be first */
 	struct gpio_driver_config common;
 	char *parent_dev_name;
-	u8_t keyscan_idx;
+	uint8_t keyscan_idx;
 };
 
 struct gpio_ht16k33_data {
@@ -122,9 +122,9 @@ static int gpio_ht16k33_pin_interrupt_configure(struct device *port,
 }
 
 void ht16k33_process_keyscan_row_data(struct device *dev,
-				      u32_t keys)
+				      uint32_t keys)
 {
-	struct gpio_ht16k33_data *data = dev->driver_data;
+	struct gpio_ht16k33_data *data = dev->data;
 
 	gpio_fire_callbacks(&data->callbacks, dev, keys);
 }
@@ -133,36 +133,22 @@ static int gpio_ht16k33_manage_callback(struct device *dev,
 					struct gpio_callback *callback,
 					bool set)
 {
-	struct gpio_ht16k33_data *data = dev->driver_data;
+	struct gpio_ht16k33_data *data = dev->data;
 
 	return gpio_manage_callback(&data->callbacks, callback, set);
 }
 
-static int gpio_ht16k33_enable_callback(struct device *dev,
-					gpio_pin_t pin)
+static uint32_t gpio_ht16k33_get_pending_int(struct device *dev)
 {
-	/* All callbacks are always enabled */
-	return 0;
-}
-
-static int gpio_ht16k33_disable_callback(struct device *dev,
-					gpio_pin_t pin)
-{
-	/* Individual callbacks can not be disabled */
-	return -ENOTSUP;
-}
-
-static u32_t gpio_ht16k33_get_pending_int(struct device *dev)
-{
-	struct gpio_ht16k33_data *data = dev->driver_data;
+	struct gpio_ht16k33_data *data = dev->data;
 
 	return ht16k33_get_pending_int(data->parent);
 }
 
 static int gpio_ht16k33_init(struct device *dev)
 {
-	const struct gpio_ht16k33_cfg *config = dev->config->config_info;
-	struct gpio_ht16k33_data *data = dev->driver_data;
+	const struct gpio_ht16k33_cfg *config = dev->config;
+	struct gpio_ht16k33_data *data = dev->data;
 
 	if (config->keyscan_idx >= HT16K33_KEYSCAN_ROWS) {
 		LOG_ERR("HT16K33 keyscan index out of bounds (%d)",
@@ -191,8 +177,6 @@ static const struct gpio_driver_api gpio_ht16k33_api = {
 	.port_toggle_bits = gpio_ht16k33_port_toggle_bits,
 	.pin_interrupt_configure = gpio_ht16k33_pin_interrupt_configure,
 	.manage_callback = gpio_ht16k33_manage_callback,
-	.enable_callback = gpio_ht16k33_enable_callback,
-	.disable_callback = gpio_ht16k33_disable_callback,
 	.get_pending_int = gpio_ht16k33_get_pending_int,
 };
 
@@ -215,6 +199,6 @@ static const struct gpio_driver_api gpio_ht16k33_api = {
 			    &gpio_ht16k33_##id##_data,			\
 			    &gpio_ht16k33_##id##_cfg, POST_KERNEL,	\
 			    CONFIG_GPIO_HT16K33_INIT_PRIORITY,		\
-			    &gpio_ht16k33_api)
+			    &gpio_ht16k33_api);
 
-DT_INST_FOREACH(GPIO_HT16K33_DEVICE)
+DT_INST_FOREACH_STATUS_OKAY(GPIO_HT16K33_DEVICE)

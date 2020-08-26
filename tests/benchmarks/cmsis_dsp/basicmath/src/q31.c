@@ -147,9 +147,9 @@ static const q31_t input2[256] = {
 	0x293701E2, 0xC0D85C67, 0x06D39B8C, 0x0B7E6C0C
 	};
 
-void benchmark_vec_add_q31(void)
+void test_benchmark_vec_add_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q31_t *output;
 
 	/* Allocate output buffer */
@@ -172,9 +172,9 @@ void benchmark_vec_add_q31(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_sub_q31(void)
+void test_benchmark_vec_sub_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q31_t *output;
 
 	/* Allocate output buffer */
@@ -197,9 +197,9 @@ void benchmark_vec_sub_q31(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_mult_q31(void)
+void test_benchmark_vec_mult_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q31_t *output;
 
 	/* Allocate output buffer */
@@ -222,9 +222,9 @@ void benchmark_vec_mult_q31(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_abs_q31(void)
+void test_benchmark_vec_abs_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q31_t *output;
 
 	/* Allocate output buffer */
@@ -247,9 +247,9 @@ void benchmark_vec_abs_q31(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_negate_q31(void)
+void test_benchmark_vec_negate_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q31_t *output;
 
 	/* Allocate output buffer */
@@ -272,9 +272,9 @@ void benchmark_vec_negate_q31(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_offset_q31(void)
+void test_benchmark_vec_offset_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q31_t *output;
 
 	/* Allocate output buffer */
@@ -297,9 +297,9 @@ void benchmark_vec_offset_q31(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_scale_q31(void)
+void test_benchmark_vec_scale_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q31_t *output;
 
 	/* Allocate output buffer */
@@ -322,9 +322,9 @@ void benchmark_vec_scale_q31(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_dot_prod_q31(void)
+void test_benchmark_vec_dot_prod_q31(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	q63_t output;
 
 	/* Begin benchmark */
@@ -343,14 +343,14 @@ void benchmark_vec_dot_prod_q31(void)
 void benchmark_basicmath_q31(void)
 {
 	ztest_test_suite(basicmath_q31_benchmark,
-		ztest_unit_test(benchmark_vec_add_q31),
-		ztest_unit_test(benchmark_vec_sub_q31),
-		ztest_unit_test(benchmark_vec_mult_q31),
-		ztest_unit_test(benchmark_vec_abs_q31),
-		ztest_unit_test(benchmark_vec_negate_q31),
-		ztest_unit_test(benchmark_vec_offset_q31),
-		ztest_unit_test(benchmark_vec_scale_q31),
-		ztest_unit_test(benchmark_vec_dot_prod_q31)
+		ztest_unit_test(test_benchmark_vec_add_q31),
+		ztest_unit_test(test_benchmark_vec_sub_q31),
+		ztest_unit_test(test_benchmark_vec_mult_q31),
+		ztest_unit_test(test_benchmark_vec_abs_q31),
+		ztest_unit_test(test_benchmark_vec_negate_q31),
+		ztest_unit_test(test_benchmark_vec_offset_q31),
+		ztest_unit_test(test_benchmark_vec_scale_q31),
+		ztest_unit_test(test_benchmark_vec_dot_prod_q31)
 		);
 
 	ztest_run_test_suite(basicmath_q31_benchmark);

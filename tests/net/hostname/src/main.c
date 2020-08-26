@@ -16,6 +16,7 @@ LOG_MODULE_REGISTER(net_test, NET_LOG_LEVEL);
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
+#include <random/rand32.h>
 #include <sys/printk.h>
 #include <linker/sections.h>
 
@@ -56,8 +57,8 @@ static struct k_sem wait_data;
 #define WAIT_TIME 250
 
 struct net_if_test {
-	u8_t idx;
-	u8_t mac_addr[sizeof(struct net_eth_addr)];
+	uint8_t idx;
+	uint8_t mac_addr[sizeof(struct net_eth_addr)];
 	struct net_linkaddr ll_addr;
 };
 
@@ -66,9 +67,9 @@ static int net_iface_dev_init(struct device *dev)
 	return 0;
 }
 
-static u8_t *net_iface_get_mac(struct device *dev)
+static uint8_t *net_iface_get_mac(struct device *dev)
 {
-	struct net_if_test *data = dev->driver_data;
+	struct net_if_test *data = dev->data;
 
 	if (data->mac_addr[2] == 0x00) {
 		/* 00-00-5E-00-53-xx Documentation RFC 7042 */
@@ -88,7 +89,7 @@ static u8_t *net_iface_get_mac(struct device *dev)
 
 static void net_iface_init(struct net_if *iface)
 {
-	u8_t *mac = net_iface_get_mac(net_if_get_device(iface));
+	uint8_t *mac = net_iface_get_mac(net_if_get_device(iface));
 
 	net_if_set_link_addr(iface, mac, sizeof(struct net_eth_addr),
 			     NET_LINK_ETHERNET);
@@ -131,7 +132,7 @@ NET_DEVICE_INIT_INSTANCE(net_iface1_test,
 
 struct eth_fake_context {
 	struct net_if *iface;
-	u8_t mac_address[6];
+	uint8_t mac_address[6];
 	bool promisc_mode;
 };
 
@@ -140,7 +141,7 @@ static struct eth_fake_context eth_fake_data;
 static void eth_fake_iface_init(struct net_if *iface)
 {
 	struct device *dev = net_if_get_device(iface);
-	struct eth_fake_context *ctx = dev->driver_data;
+	struct eth_fake_context *ctx = dev->data;
 
 	ctx->iface = iface;
 
@@ -175,7 +176,7 @@ static struct ethernet_api eth_fake_api_funcs = {
 
 static int eth_fake_init(struct device *dev)
 {
-	struct eth_fake_context *ctx = dev->driver_data;
+	struct eth_fake_context *ctx = dev->data;
 
 	ctx->promisc_mode = false;
 
@@ -215,7 +216,7 @@ static void iface_cb(struct net_if *iface, void *user_data)
 	}
 }
 
-static void iface_setup(void)
+static void test_iface_setup(void)
 {
 	struct net_if_mcast_addr *maddr;
 	struct net_if_addr *ifaddr;
@@ -228,7 +229,7 @@ static void iface_setup(void)
 
 	idx = net_if_get_by_iface(iface1);
 	((struct net_if_test *)
-	 net_if_get_device(iface1)->driver_data)->idx = idx;
+	 net_if_get_device(iface1)->data)->idx = idx;
 
 	DBG("Interfaces: [%d] iface1 %p\n",
 	    net_if_get_by_iface(iface1), iface1);
@@ -278,7 +279,7 @@ static void iface_setup(void)
 	test_started = true;
 }
 
-static int bytes_from_hostname_unique(u8_t *buf, int buf_len, const char *src)
+static int bytes_from_hostname_unique(uint8_t *buf, int buf_len, const char *src)
 {
 	unsigned int i;
 
@@ -312,7 +313,7 @@ static int bytes_from_hostname_unique(u8_t *buf, int buf_len, const char *src)
 	return 0;
 }
 
-static void hostname_get(void)
+static void test_hostname_get(void)
 {
 	const char *hostname;
 	const char *config_hostname = CONFIG_NET_HOSTNAME;
@@ -335,7 +336,7 @@ static void hostname_get(void)
 	}
 }
 
-static void hostname_set(void)
+static void test_hostname_set(void)
 {
 	if (IS_ENABLED(CONFIG_NET_HOSTNAME_UNIQUE)) {
 		int ret;
@@ -349,9 +350,9 @@ static void hostname_set(void)
 void test_main(void)
 {
 	ztest_test_suite(net_hostname_test,
-			 ztest_unit_test(iface_setup),
-			 ztest_unit_test(hostname_get),
-			 ztest_unit_test(hostname_set)
+			 ztest_unit_test(test_iface_setup),
+			 ztest_unit_test(test_hostname_get),
+			 ztest_unit_test(test_hostname_set)
 		);
 
 	ztest_run_test_suite(net_hostname_test);

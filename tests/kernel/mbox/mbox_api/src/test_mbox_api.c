@@ -122,7 +122,7 @@ static void tmbox_put(struct k_mbox *pmbox)
 		k_mbox_put(pmbox, &mmsg, K_FOREVER);
 		break;
 	case PUT_GET_BUFFER:
-	/*fall through*/
+		__fallthrough;
 	case TARGET_SOURCE_THREAD_BUFFER:
 		/**TESTPOINT: mbox sync put buffer*/
 		mmsg.info = PUT_GET_BUFFER;
@@ -146,7 +146,7 @@ static void tmbox_put(struct k_mbox *pmbox)
 		k_sem_take(&sync_sema, K_FOREVER);
 		break;
 	case ASYNC_PUT_GET_BLOCK:
-	/*fall through*/
+		__fallthrough;
 	case TARGET_SOURCE_THREAD_BLOCK:
 		/**TESTPOINT: mbox async put mem block*/
 		mmsg.info = ASYNC_PUT_GET_BLOCK;
@@ -317,7 +317,7 @@ static void tmbox_get(struct k_mbox *pmbox)
 		zassert_equal(mmsg.size, 0, NULL);
 		break;
 	case PUT_GET_BUFFER:
-	/*fall through*/
+		__fallthrough;
 	case TARGET_SOURCE_THREAD_BUFFER:
 		/**TESTPOINT: mbox sync get buffer*/
 		mmsg.size = sizeof(rxdata);
@@ -347,7 +347,7 @@ static void tmbox_get(struct k_mbox *pmbox)
 			     NULL);
 		break;
 	case ASYNC_PUT_GET_BLOCK:
-	/*fall through*/
+		__fallthrough;
 	case TARGET_SOURCE_THREAD_BLOCK:
 		/**TESTPOINT: mbox async get mem block*/
 		mmsg.size = MAIL_LEN;
@@ -501,7 +501,7 @@ static void tmbox_get(struct k_mbox *pmbox)
 		break;
 	case MULTIPLE_WAITING_GET:
 		/* Create 5 threads who will wait on a mbox_get. */
-		for (u32_t i = 0; i < 5; i++) {
+		for (uint32_t i = 0; i < 5; i++) {
 			k_thread_create(&waiting_get_tid[i],
 					waiting_get_stack[i],
 					STACK_SIZE,

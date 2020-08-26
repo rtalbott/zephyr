@@ -28,6 +28,9 @@
 	(STM32_PINMUX_ALT_FUNC_8 | STM32_PUSHPULL_PULLUP)
 #define STM32L4X_PINMUX_FUNC_PA0_ADC12_IN5 STM32_MODER_ANALOG_MODE
 
+#define STM32L4X_PINMUX_FUNC_PA1_SPI1_SCK                                      \
+	(STM32_PINMUX_ALT_FUNC_5 | STM32_PUPDR_PULL_DOWN |                     \
+	 STM32_OSPEEDR_VERY_HIGH_SPEED)
 #define STM32L4X_PINMUX_FUNC_PA1_USART2_RTS                                    \
 	(STM32_PINMUX_ALT_FUNC_7 | STM32_OPENDRAIN_PULLUP)
 #define STM32L4X_PINMUX_FUNC_PA1_UART4_RX                                      \
@@ -44,6 +47,8 @@
 
 #define STM32L4X_PINMUX_FUNC_PA4_SPI1_NSS                                      \
 	(STM32_PINMUX_ALT_FUNC_5 | STM32_PUSHPULL_PULLUP)
+#define STM32L4X_PINMUX_FUNC_PA4_SPI3_NSS                                      \
+	(STM32_PINMUX_ALT_FUNC_6 | STM32_PUSHPULL_PULLUP)
 #define STM32L4X_PINMUX_FUNC_PA4_ADC12_IN9 STM32_MODER_ANALOG_MODE
 
 #define STM32L4X_PINMUX_FUNC_PA5_PWM2_CH1                                      \
@@ -110,14 +115,18 @@
 	(STM32_PINMUX_ALT_FUNC_1 | STM32_PUSHPULL_NOPULL)
 #define STM32L4X_PINMUX_FUNC_PA15_USART2_RX                                    \
 	(STM32_PINMUX_ALT_FUNC_3 | STM32_PUPDR_NO_PULL)
-#define STM32L4X_PINMUX_FUNC_PA15_SPI3_NSS                                     \
+#define STM32L4X_PINMUX_FUNC_PA15_SPI1_NSS                                     \
 	(STM32_PINMUX_ALT_FUNC_5 | STM32_PUSHPULL_PULLUP)
+#define STM32L4X_PINMUX_FUNC_PA15_SPI3_NSS                                     \
+	(STM32_PINMUX_ALT_FUNC_6 | STM32_PUSHPULL_PULLUP)
 #define STM32L4X_PINMUX_FUNC_PA15_USART3_RTS                                   \
 	(STM32_PINMUX_ALT_FUNC_7 | STM32_OPENDRAIN_PULLUP)
 #define STM32L4X_PINMUX_FUNC_PA15_UART4_RTS                                    \
 	(STM32_PINMUX_ALT_FUNC_8 | STM32_OPENDRAIN_PULLUP)
 
 /* Port B */
+#define STM32L4X_PINMUX_FUNC_PB0_SPI1_NSS                                      \
+	(STM32_PINMUX_ALT_FUNC_5 | STM32_PUSHPULL_PULLUP)
 #define STM32L4X_PINMUX_FUNC_PB0_ADC12_IN15 STM32_MODER_ANALOG_MODE
 
 #define STM32L4X_PINMUX_FUNC_PB1_USART3_RTS                                    \
@@ -253,13 +262,24 @@
 #define STM32L4X_PINMUX_FUNC_PC7_USART6_RX                                     \
 	(STM32_PINMUX_ALT_FUNC_8 | STM32_PUPDR_NO_PULL)
 
+#define STM32L4X_PINMUX_FUNC_PC8_SDMMC1_D0                                     \
+	(STM32_PINMUX_ALT_FUNC_12 | STM32_PUSHPULL_PULLUP |                    \
+	 STM32_OSPEEDR_VERY_HIGH_SPEED)
+
+#define STM32L4X_PINMUX_FUNC_PC9_SDMMC1_D1                                     \
+	(STM32_PINMUX_ALT_FUNC_12 | STM32_PUSHPULL_PULLUP |                    \
+	 STM32_OSPEEDR_VERY_HIGH_SPEED)
+
 #define STM32L4X_PINMUX_FUNC_PC10_SPI3_SCK                                     \
-	(STM32_PINMUX_ALT_FUNC_6 | STM32_PUPDR_PULL_DOWN | \
+	(STM32_PINMUX_ALT_FUNC_6 | STM32_PUPDR_PULL_DOWN |                     \
 	 STM32_OSPEEDR_VERY_HIGH_SPEED)
 #define STM32L4X_PINMUX_FUNC_PC10_USART3_TX                                    \
 	(STM32_PINMUX_ALT_FUNC_7 | STM32_PUSHPULL_PULLUP)
 #define STM32L4X_PINMUX_FUNC_PC10_UART4_TX                                     \
 	(STM32_PINMUX_ALT_FUNC_8 | STM32_PUSHPULL_PULLUP)
+#define STM32L4X_PINMUX_FUNC_PC10_SDMMC1_D2                                    \
+	(STM32_PINMUX_ALT_FUNC_12 | STM32_PUSHPULL_PULLUP |                    \
+	 STM32_OSPEEDR_VERY_HIGH_SPEED)
 
 #define STM32L4X_PINMUX_FUNC_PC11_SPI3_MISO                                    \
 	(STM32_PINMUX_ALT_FUNC_6 | STM32_PUPDR_PULL_DOWN)
@@ -267,9 +287,15 @@
 	(STM32_PINMUX_ALT_FUNC_7 | STM32_PUPDR_NO_PULL)
 #define STM32L4X_PINMUX_FUNC_PC11_UART4_RX                                     \
 	(STM32_PINMUX_ALT_FUNC_8 | STM32_PUPDR_NO_PULL)
+#define STM32L4X_PINMUX_FUNC_PC11_SDMMC1_D3                                    \
+	(STM32_PINMUX_ALT_FUNC_12 | STM32_PUSHPULL_PULLUP |                    \
+	 STM32_OSPEEDR_VERY_HIGH_SPEED)
 
 #define STM32L4X_PINMUX_FUNC_PC12_SPI3_MOSI                                    \
 	(STM32_PINMUX_ALT_FUNC_6 | STM32_PUPDR_PULL_DOWN | \
+	 STM32_OSPEEDR_VERY_HIGH_SPEED)
+#define STM32L4X_PINMUX_FUNC_PC12_SDMMC1_CK                                    \
+	(STM32_PINMUX_ALT_FUNC_12 | STM32_PUSHPULL_PULLUP |                    \
 	 STM32_OSPEEDR_VERY_HIGH_SPEED)
 
 /* Port D */
@@ -285,6 +311,9 @@
 
 #define STM32L4X_PINMUX_FUNC_PD2_USART3_RTS                                    \
 	(STM32_PINMUX_ALT_FUNC_7 | STM32_OPENDRAIN_PULLUP)
+#define STM32L4X_PINMUX_FUNC_PD2_SDMMC1_CMD                                    \
+	(STM32_PINMUX_ALT_FUNC_12 | STM32_PUSHPULL_PULLUP |                    \
+	 STM32_OSPEEDR_VERY_HIGH_SPEED)
 
 #define STM32L4X_PINMUX_FUNC_PD3_USART2_CTS                                    \
 	(STM32_PINMUX_ALT_FUNC_7 | STM32_OPENDRAIN_PULLUP)

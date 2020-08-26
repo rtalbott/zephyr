@@ -92,14 +92,6 @@ config USB_UART_CONSOLE
 	  layer currently doesn't support multiple interfaces, this shouldn't be
 	  selected in conjunction with, say, USB Mass Storage.
 
-config USB_UART_DTR_WAIT
-	bool "Wait on DTR control signal"
-	depends on USB_UART_CONSOLE
-	help
-	  Enable this option to use flow control on the console. The uart console
-	  waits until the DTR is asserted by the host.
-	  Note: Disabling this might lead to missing console prints.
-
 config RAM_CONSOLE
 	bool "Use RAM console"
 	select CONSOLE_HAS_DRIVER
@@ -290,6 +282,20 @@ config NATIVE_POSIX_CONSOLE_INIT_PRIORITY
 	depends on NATIVE_POSIX_CONSOLE
 	help
 	  Device driver initialization priority.
+
+config SEMIHOST_CONSOLE
+	bool "Use semihosting for console"
+	select CONSOLE_HAS_DRIVER
+	depends on CPU_CORTEX_M
+	help
+	  Enable this option to use semihosting for console.
+	  Semihosting is a mechanism that enables code running on an ARM target
+	  to communicate and use the Input/Output facilities on a host computer
+	  that is running a debugger.
+	  Additional information can be found in:
+	  https://developer.arm.com/docs/dui0471/k/what-is-semihosting/what-is-semihosting
+	  This option is compatible with hardware and with QEMU, through the
+	  (automatic) use of the -semihosting-config switch when invoking it.
 
 module = UART_CONSOLE
 module-str = UART console

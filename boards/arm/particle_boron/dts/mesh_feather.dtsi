@@ -136,11 +136,11 @@ feather_adc: &adc { /* feather ADC */
 		};
 		slot0_partition: partition@c000 {
 			label = "image-0";
-			reg = <0x0000C000 0x000067000>;
+			reg = <0x0000C000 0x00067000>;
 		};
 		slot1_partition: partition@73000 {
 			label = "image-1";
-			reg = <0x00073000 0x000067000>;
+			reg = <0x00073000 0x00067000>;
 		};
 		scratch_partition: partition@da000 {
 			label = "image-scratch";
@@ -193,7 +193,7 @@ feather_i2c: &i2c0 { };
 	sck-pin = <19>;
 	mosi-pin = <20>;
 	miso-pin = <21>;
-	cs-gpios = <&gpio0 17 0>;
+	cs-gpios = <&gpio0 17 GPIO_ACTIVE_LOW>;
 	mx25l32: mx25l3233f@0 {
 		compatible = "jedec,spi-nor";
 		label = "MX25L3233F";

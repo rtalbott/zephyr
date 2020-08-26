@@ -13,7 +13,7 @@
 
 #define PATTERN_LENGTH	(256)
 
-static const u32_t input1[256] = {
+static const uint32_t input1[256] = {
 	0xbe7615dd, 0x3e0a5b1e, 0x3e9425e8, 0x3f433216,
 	0x3e816b4e, 0xbe143e49, 0x3e877d60, 0xbd29de75,
 	0xbebc69ec, 0x3e687466, 0xbe2e1b66, 0x3e0346d2,
@@ -80,7 +80,7 @@ static const u32_t input1[256] = {
 	0xbf03caa7, 0xbd92238d, 0xbe7cdc64, 0xbe2ac8aa
 	};
 
-static const u32_t input2[256] = {
+static const uint32_t input2[256] = {
 	0x3efd7b68, 0xbf3396c6, 0x3ecf0d7f, 0xbce77d0c,
 	0xbe8045d0, 0xbea8c5d4, 0x3e6a3aaa, 0xbeb9c2f5,
 	0x3ce7f210, 0xbf0f4737, 0xbee71c87, 0xbdcd4ed3,
@@ -147,9 +147,9 @@ static const u32_t input2[256] = {
 	0xbf6a57bf, 0xbe9b9d13, 0x3ddf83ce, 0xbec67d55
 	};
 
-void benchmark_vec_add_f32(void)
+void test_benchmark_vec_add_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t *output;
 
 	/* Allocate output buffer */
@@ -174,9 +174,9 @@ void benchmark_vec_add_f32(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_sub_f32(void)
+void test_benchmark_vec_sub_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t *output;
 
 	/* Allocate output buffer */
@@ -201,9 +201,9 @@ void benchmark_vec_sub_f32(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_mult_f32(void)
+void test_benchmark_vec_mult_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t *output;
 
 	/* Allocate output buffer */
@@ -228,9 +228,9 @@ void benchmark_vec_mult_f32(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_abs_f32(void)
+void test_benchmark_vec_abs_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t *output;
 
 	/* Allocate output buffer */
@@ -253,9 +253,9 @@ void benchmark_vec_abs_f32(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_negate_f32(void)
+void test_benchmark_vec_negate_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t *output;
 
 	/* Allocate output buffer */
@@ -278,9 +278,9 @@ void benchmark_vec_negate_f32(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_offset_f32(void)
+void test_benchmark_vec_offset_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t *output;
 
 	/* Allocate output buffer */
@@ -303,9 +303,9 @@ void benchmark_vec_offset_f32(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_scale_f32(void)
+void test_benchmark_vec_scale_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t *output;
 
 	/* Allocate output buffer */
@@ -328,9 +328,9 @@ void benchmark_vec_scale_f32(void)
 	TC_PRINT(BENCHMARK_TYPE " = %u\n", timespan);
 }
 
-void benchmark_vec_dot_prod_f32(void)
+void test_benchmark_vec_dot_prod_f32(void)
 {
-	u32_t irq_key, timestamp, timespan;
+	uint32_t irq_key, timestamp, timespan;
 	float32_t output;
 
 	/* Begin benchmark */
@@ -351,14 +351,14 @@ void benchmark_vec_dot_prod_f32(void)
 void benchmark_basicmath_f32(void)
 {
 	ztest_test_suite(basicmath_f32_benchmark,
-		ztest_unit_test(benchmark_vec_add_f32),
-		ztest_unit_test(benchmark_vec_sub_f32),
-		ztest_unit_test(benchmark_vec_mult_f32),
-		ztest_unit_test(benchmark_vec_abs_f32),
-		ztest_unit_test(benchmark_vec_negate_f32),
-		ztest_unit_test(benchmark_vec_offset_f32),
-		ztest_unit_test(benchmark_vec_scale_f32),
-		ztest_unit_test(benchmark_vec_dot_prod_f32)
+		ztest_unit_test(test_benchmark_vec_add_f32),
+		ztest_unit_test(test_benchmark_vec_sub_f32),
+		ztest_unit_test(test_benchmark_vec_mult_f32),
+		ztest_unit_test(test_benchmark_vec_abs_f32),
+		ztest_unit_test(test_benchmark_vec_negate_f32),
+		ztest_unit_test(test_benchmark_vec_offset_f32),
+		ztest_unit_test(test_benchmark_vec_scale_f32),
+		ztest_unit_test(test_benchmark_vec_dot_prod_f32)
 		);
 
 	ztest_run_test_suite(basicmath_f32_benchmark);

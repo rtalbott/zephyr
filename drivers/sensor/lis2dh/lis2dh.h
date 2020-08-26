@@ -21,7 +21,7 @@
 #define LIS2DH_REG_WAI			0x0f
 #define LIS2DH_CHIP_ID			0x33
 
-#if DT_ANY_INST_ON_BUS(spi)
+#if DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
 #include <drivers/spi.h>
 
 #define LIS2DH_SPI_READ_BIT		BIT(7)
@@ -31,7 +31,7 @@
 /* LIS2DH supports only SPI mode 0, word size 8 bits, MSB first */
 #define LIS2DH_SPI_CFG			SPI_WORD_SET(8)
 
-#elif DT_ANY_INST_ON_BUS(i2c)
+#elif DT_ANY_INST_ON_BUS_STATUS_OKAY(i2c)
 #include <drivers/i2c.h>
 #else
 #error "define bus type (I2C/SPI)"
@@ -190,39 +190,40 @@
 #endif
 
 union lis2dh_sample {
-	u8_t raw[LIS2DH_BUF_SZ];
+	uint8_t raw[LIS2DH_BUF_SZ];
 	struct {
-		u8_t status;
-		s16_t xyz[3];
+		uint8_t status;
+		int16_t xyz[3];
 	} __packed;
 };
 
 struct lis2dh_config {
 	char *bus_name;
 	int (*bus_init)(struct device *dev);
-#if DT_ANY_INST_ON_BUS(i2c)
-	u16_t i2c_slv_addr;
-#elif DT_ANY_INST_ON_BUS(spi)
+#if DT_ANY_INST_ON_BUS_STATUS_OKAY(i2c)
+	uint16_t i2c_slv_addr;
+#elif DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
 	struct spi_config spi_conf;
 #if DT_INST_SPI_DEV_HAS_CS_GPIOS(0)
 	const char *gpio_cs_port;
-	u8_t cs_gpio;
+	uint8_t cs_gpio;
+	uint8_t cs_gpio_flags;
 #endif /* DT_INST_SPI_DEV_HAS_CS_GPIOS(0) */
-#endif /* DT_ANY_INST_ON_BUS(spi) */
+#endif /* DT_ANY_INST_ON_BUS_STATUS_OKAY(spi) */
 
 };
 
 struct lis2dh_transfer_function {
-	int (*read_data)(struct device *dev, u8_t reg_addr,
-			 u8_t *value, u8_t len);
-	int (*write_data)(struct device *dev, u8_t reg_addr,
-			  u8_t *value, u8_t len);
-	int (*read_reg)(struct device *dev, u8_t reg_addr,
-			u8_t *value);
-	int (*write_reg)(struct device *dev, u8_t reg_addr,
-			u8_t value);
-	int (*update_reg)(struct device *dev, u8_t reg_addr,
-			  u8_t mask, u8_t value);
+	int (*read_data)(struct device *dev, uint8_t reg_addr,
+			 uint8_t *value, uint8_t len);
+	int (*write_data)(struct device *dev, uint8_t reg_addr,
+			  uint8_t *value, uint8_t len);
+	int (*read_reg)(struct device *dev, uint8_t reg_addr,
+			uint8_t *value);
+	int (*write_reg)(struct device *dev, uint8_t reg_addr,
+			uint8_t value);
+	int (*update_reg)(struct device *dev, uint8_t reg_addr,
+			  uint8_t mask, uint8_t value);
 };
 
 struct lis2dh_data {
@@ -231,7 +232,7 @@ struct lis2dh_data {
 
 	union lis2dh_sample sample;
 	/* current scaling factor, in micro m/s^2 / lsb */
-	u32_t scale;
+	uint32_t scale;
 
 #ifdef CONFIG_LIS2DH_TRIGGER
 	struct device *gpio_int1;
@@ -245,7 +246,7 @@ struct lis2dh_data {
 	enum sensor_channel chan_drdy;
 
 #if defined(CONFIG_LIS2DH_TRIGGER_OWN_THREAD)
-	K_THREAD_STACK_MEMBER(thread_stack, CONFIG_LIS2DH_THREAD_STACK_SIZE);
+	K_KERNEL_STACK_MEMBER(thread_stack, CONFIG_LIS2DH_THREAD_STACK_SIZE);
 	struct k_thread thread;
 	struct k_sem gpio_sem;
 #elif defined(CONFIG_LIS2DH_TRIGGER_GLOBAL_THREAD)
@@ -259,8 +260,8 @@ struct lis2dh_data {
 #endif /* DT_SPI_DEV_HAS_CS_GPIOS(DT_INST(0, st_lis2mdl)) */
 };
 
-#if DT_ANY_INST_ON_BUS(spi)
-int lis2dh_spi_access(struct lis2dh_data *ctx, u8_t cmd,
+#if DT_ANY_INST_ON_BUS_STATUS_OKAY(spi)
+int lis2dh_spi_access(struct lis2dh_data *ctx, uint8_t cmd,
 		      void *data, size_t length);
 #endif
 

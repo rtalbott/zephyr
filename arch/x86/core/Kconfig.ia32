@@ -55,6 +55,7 @@ config X86_ENABLE_TSS
 config X86_STACK_PROTECTION
 	bool
 	default y if HW_STACK_PROTECTION
+	select THREAD_STACK_INFO
 	select SET_GDT
 	select GDT_DYNAMIC
 	select X86_ENABLE_TSS
@@ -74,6 +75,15 @@ config X86_USERSPACE
 	  This option enables APIs to drop a thread's privileges down to ring 3,
 	  supporting user-level threads that are protected from each other and
 	  from crashing the kernel.
+
+config X86_PAE
+	bool "Use PAE page tables"
+	default y
+	depends on X86_MMU
+	help
+	  If enabled, use PAE-style page tables instead of 32-bit page tables.
+	  The advantage is support for the Execute Disable bit, at a cost of
+	  more memory for paging structures.
 
 menu "Architecture Floating Point Options"
 depends on CPU_HAS_FPU
@@ -98,7 +108,7 @@ config SSE_FP_MATH
 	  Disabling this option means that the compiler utilizes only the
 	  x87 instruction set for floating point operations.
 
-config EAGER_FP_SHARING
+config EAGER_FPU_SHARING
 	bool
 	depends on FPU
 	depends on USERSPACE
@@ -113,11 +123,11 @@ config EAGER_FP_SHARING
 	  FPU register set, should be used any time CONFIG_FPU is
 	  enabled, regardless if the FPU is used by one thread or multiple.
 
-config LAZY_FP_SHARING
+config LAZY_FPU_SHARING
 	bool
 	depends on FPU
-	depends on !EAGER_FP_SHARING
-	depends on FP_SHARING
+	depends on !EAGER_FPU_SHARING
+	depends on FPU_SHARING
 	default y if X86_NO_LAZY_FP || !USERSPACE
 	help
 	  This hidden option allows multiple threads to use the floating point

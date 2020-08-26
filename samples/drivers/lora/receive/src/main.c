@@ -11,7 +11,7 @@
 #include <zephyr.h>
 
 #define DEFAULT_RADIO_NODE DT_ALIAS(lora0)
-BUILD_ASSERT(DT_HAS_NODE_STATUS_OKAY(DEFAULT_RADIO_NODE),
+BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
 	     "No default LoRa radio specified in DT");
 #define DEFAULT_RADIO DT_LABEL(DEFAULT_RADIO_NODE)
 
@@ -26,9 +26,9 @@ void main(void)
 	struct device *lora_dev;
 	struct lora_modem_config config;
 	int ret, len;
-	u8_t data[MAX_DATA_LEN] = {0};
-	s16_t rssi;
-	s8_t snr;
+	uint8_t data[MAX_DATA_LEN] = {0};
+	int16_t rssi;
+	int8_t snr;
 
 	lora_dev = device_get_binding(DEFAULT_RADIO);
 	if (!lora_dev) {

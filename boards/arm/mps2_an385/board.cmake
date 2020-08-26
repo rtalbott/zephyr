@@ -8,7 +8,6 @@ set(QEMU_FLAGS_${ARCH}
   -machine mps2-an385
   -nographic
   -vga none
-  -icount shift=7,align=off,sleep=off -rtc clock=vm
   )
 
 board_set_debugger_ifnset(qemu)

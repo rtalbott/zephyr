@@ -9,9 +9,14 @@ endif()
 if(CONFIG_X86_64)
   set(QEMU_binary_suffix x86_64)
   set(QEMU_CPU_TYPE_${ARCH} qemu64,+x2apic)
+  if("${CONFIG_MP_NUM_CPUS}" STREQUAL "1")
+    # icount works with 1 CPU so we can enable it here.
+    # FIXME: once this works across configs, remove this line and set
+    # CONFIG_QEMU_ICOUNT_SHIFT in defconfig instead.
+    list(APPEND QEMU_EXTRA_FLAGS -icount shift=5,align=off,sleep=off -rtc clock=vm)
+  endif()
 else()
   set(QEMU_CPU_TYPE_${ARCH} qemu32,+nx,+pae)
-  set(ICOUNT_ARG -icount shift=5,align=off,sleep=off -rtc clock=vm)
 endif()
 
 set(QEMU_FLAGS_${ARCH}
@@ -20,7 +25,6 @@ set(QEMU_FLAGS_${ARCH}
   -device isa-debug-exit,iobase=0xf4,iosize=0x04
   ${REBOOT_FLAG}
   -nographic
-  ${ICOUNT_ARG}
   )
 
 # TODO: Support debug
